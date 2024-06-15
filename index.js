@@ -29,6 +29,22 @@ async function run() {
      const categoryCollection = client.db('libraryDb').collection('Category');
      const borrowCollection = client.db('libraryDb').collection('Borrowed');
      const userCollection = client.db('libraryDb').collection('Users');
+
+
+
+     // category related api
+    app.get('/category',async(req, res)=>{
+      const category = await categoryCollection.find().toArray();
+      res.send(category)
+    })
+
+    app.get('/details/:id', async(req, res) =>{
+      const id = req.params;
+      const query = {_id: new ObjectId(id)};
+      const book = await booksCollection.findOne(query);
+      res.send(book);
+    })
+
  
 // books related api
 app.get('/books',logger, verifyToken, async(req, res)=>{
