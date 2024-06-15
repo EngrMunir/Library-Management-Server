@@ -46,6 +46,32 @@ app.get('/books',logger, verifyToken, async(req, res)=>{
     res.send(result);
   })
 
+   // particular user
+   app.get('/borrow/books',verifyToken, async(req, res)=>{
+    const email = req.query.email;
+    console.log('token owner info ',req.user)
+    if(req.user.email !== req.query.email){
+      return res.status(403).send({message:'forbidden access'})
+    }
+    const query ={user: email};
+    const result = await borrowCollection.find(query).toArray();
+    res.send(result);
+  })
+  app.post('/borrow/books', async(req, res)=>{
+    const borrowInfo = req.body;
+    const { userId, user } = borrowInfo;
+    console.log('userid',userId,'user', user)
+    
+    // Check if the book already exists for the user
+    const existingBorrowedBook = await borrowCollection.findOne({ userId, user });
+    if (existingBorrowedBook) {
+        return res.status(400).send({ error: 'You have already borrowed this book' });
+    }
+    const result = await borrowCollection.insertOne(borrowInfo);
+    res.send(result)
+  })
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
