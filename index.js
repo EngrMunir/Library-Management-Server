@@ -86,6 +86,31 @@ app.get('/books',logger, verifyToken, async(req, res)=>{
     const result = await borrowCollection.insertOne(borrowInfo);
     res.send(result)
   })
+  
+// books read for update
+app.get('/updateBook/:id', async(req, res) =>{
+    const id = req.params.id;
+    // console.log(id)
+    const query ={ _id: new ObjectId(id)}
+    const result = await booksCollection.findOne(query);
+    res.send(result)
+  })
+
+  app.patch('/book/:id/decrease', async(req, res)=>{
+    const id = req.params.id;
+    const query = {_id: new ObjectId(id)}
+    const result = await booksCollection.updateOne(query, { $inc: {quantity:-1}})
+    // console.log(result);
+    res.send(result)
+  })
+  // increase
+  app.patch('/book/:id/increase', async(req, res)=>{
+    const id = req.params.id;
+    const query = {_id: new ObjectId(id)}
+    const result = await booksCollection.updateOne(query, { $inc: {quantity:1}})
+    // console.log(result);
+    res.send(result)
+  })
 
 
 
