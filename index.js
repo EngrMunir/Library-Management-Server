@@ -86,7 +86,7 @@ app.get('/books',logger, verifyToken, async(req, res)=>{
     const result = await borrowCollection.insertOne(borrowInfo);
     res.send(result)
   })
-  
+
 // books read for update
 app.get('/updateBook/:id', async(req, res) =>{
     const id = req.params.id;
@@ -112,6 +112,12 @@ app.get('/updateBook/:id', async(req, res) =>{
     res.send(result)
   })
 
+  app.delete('/borrowedBooks/:id', async(req, res)=>{
+    const id = req.params.id;
+    const query ={_id: id};
+    const result = await borrowCollection.deleteOne(query)
+    res.send(result)
+  })
 
 
     // Send a ping to confirm a successful connection
