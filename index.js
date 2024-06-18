@@ -11,16 +11,18 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(cors({
   origin: [
-    'http://localhost:5173'
+    'http://localhost:5173',
+    // 'https://library-management-clien-5c580.web.app',
+    // 'https://library-management-clien-5c580.firebaseapp.com'
+
   ],
   credentials: true
 }));
 app.use(express.json());
 app.use(cookieParser());
 
-
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.niwwhqe.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-
+console.log(process.env.DB_USER)
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.yk1xelo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -38,7 +40,7 @@ const logger = (req, res, next)=>{
 
 const verifyToken = (req, res, next)=>{
   const token = req.cookies?.token;
-  // console.log('token in the middleware', token);
+  console.log('token in the middleware', token);
   // no token available
   if(!token){
     return res.status(401).send({message: 'unauthorized access'})
@@ -55,9 +57,9 @@ const verifyToken = (req, res, next)=>{
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
-    // const userCollection = client.db('juteDB').collection('user');
+
     const booksCollection = client.db('libraryDb').collection('Books');
     const categoryCollection = client.db('libraryDb').collection('Category');
     const borrowCollection = client.db('libraryDb').collection('Borrowed');
@@ -106,6 +108,13 @@ async function run() {
       res.send(result)
     })
 
+    // users related api
+    app.post('/users', async(req, res)=>{
+      const userInfo= req.body;
+      const result =await userCollection.insertOne(userInfo)
+      res.send(result);
+    })
+
     // books related api
     app.get('/books',logger, verifyToken, async(req, res)=>{
       // console.log('token owner info :',req.user)
@@ -115,17 +124,20 @@ async function run() {
     
     app.post('/books',verifyToken, async(req, res) =>{
       const book = req.body;
+      console.log(book);
+      // console.log(req.cookies)
       // Convert quantity and rating to integers
       book.quantity = parseInt(book.quantity);
       book.rating = parseInt(book.rating);
       const result = await booksCollection.insertOne(book);
+      console.log(result);
       res.send(result);
     })
 
     // particular user
     app.get('/borrow/books',verifyToken, async(req, res)=>{
       const email = req.query.email;
-      console.log('token owner info ',req.user)
+      // console.log('token owner info ',req.user)
       if(req.user.email !== req.query.email){
         return res.status(403).send({message:'forbidden access'})
       }
@@ -135,11 +147,11 @@ async function run() {
     })
     app.post('/borrow/books', async(req, res)=>{
       const borrowInfo = req.body;
-      const { userId, user } = borrowInfo;
-      console.log('userid',userId,'user', user)
+      const { bookId, user } = borrowInfo;
+      console.log('bookId',bookId,'user', user)
       
       // Check if the book already exists for the user
-      const existingBorrowedBook = await borrowCollection.findOne({ userId, user });
+      const existingBorrowedBook = await borrowCollection.findOne({ bookId, user });
       if (existingBorrowedBook) {
           return res.status(400).send({ error: 'You have already borrowed this book' });
       }
@@ -174,8 +186,10 @@ async function run() {
 
     app.delete('/borrowedBooks/:id', async(req, res)=>{
       const id = req.params.id;
-      const query ={_id: id};
+      console.log(id);
+      const query ={bookId: id};
       const result = await borrowCollection.deleteOne(query)
+      console.log(result)
       res.send(result)
     })
 
@@ -200,7 +214,7 @@ async function run() {
     })
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
